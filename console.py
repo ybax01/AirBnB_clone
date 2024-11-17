@@ -1,101 +1,81 @@
 #!/usr/bin/python3
 """
-Command interpreter for the AirBnB clone project
+Command interpreter module for AirBnB clone.
 """
+
 import cmd
 from models import storage
-from models.user import User
 from models.base_model import BaseModel
+from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 
 
 class HBNBCommand(cmd.Cmd):
-    """Command interpreter class"""
+    """Command interpreter for AirBnB clone."""
+
     prompt = "(hbnb) "
 
-    def do_create(self, arg):
-        """Creates a new instance of BaseModel or User"""
-        if not arg:
-            print("** class name missing **")
-            return
-        if arg not in ["BaseModel", "User"]:
-            print("** class doesn't exist **")
-            return
-        obj = eval(arg)()
-        obj.save()
-        print(obj.id)
+    classes = {
+        "BaseModel": BaseModel,
+        "User": User,
+        "State": State,
+        "City": City,
+        "Amenity": Amenity,
+        "Place": Place,
+        "Review": Review,
+    }
 
-    def do_show(self, arg):
-        """Shows an instance of a class by id"""
-        args = arg.split()
-        if not args:
-            print("** class name missing **")
-            return
-        if args[0] not in ["BaseModel", "User"]:
-            print("** class doesn't exist **")
-            return
-        if len(args) < 2:
-            print("** instance id missing **")
-            return
-        key = f"{args[0]}.{args[1]}"
-        obj = storage.all().get(key)
-        if not obj:
-            print("** no instance found **")
-        else:
-            print(obj)
+    def do_EOF(self, arg):
+        """Handles EOF to exit the program."""
+        print("")
+        return True
 
-    def do_destroy(self, arg):
-        """Deletes an instance of a class by id"""
-        args = arg.split()
-        if not args:
-            print("** class name missing **")
-            return
-        if args[0] not in ["BaseModel", "User"]:
-            print("** class doesn't exist **")
-            return
-        if len(args) < 2:
-            print("** instance id missing **")
-            return
-        key = f"{args[0]}.{args[1]}"
-        if key in storage.all():
-            del storage.all()[key]
-            storage.save()
-        else:
-            print("** no instance found **")
+    def do_quit(self, arg):
+        """Quit command to exit the program."""
+        return True
+
+    def emptyline(self):
+        """Do nothing on an empty line."""
+        pass
 
     def do_all(self, arg):
-        """Shows all instances of a class, or all classes if none specified"""
-        if arg and arg not in ["BaseModel", "User"]:
+        """Retrieve all instances of a specified class or all objects.
+
+        Usage:
+            all <class name>
+            <class name>.all()
+        """
+        if "." in arg and arg.endswith(".all()"):
+            class_name = arg.split(".")[0]
+        else:
+            class_name = arg
+
+        if class_name and class_name not in self.classes:
             print("** class doesn't exist **")
             return
-        objs = storage.all()
-        result = [str(obj) for key, obj in objs.items() if not arg or key.startswith(arg)]
+
+        all_objs = storage.all()
+        result = []
+
+        if class_name:
+            for key, obj in all_objs.items():
+                if key.startswith(class_name):
+                    result.append(str(obj))
+        else:
+            result = [str(obj) for obj in all_objs.values()]
+
         print(result)
 
-    def do_update(self, arg):
-        """Updates an instance based on the class name and id"""
-        args = arg.split()
-        if not args:
-            print("** class name missing **")
-            return
-        if args[0] not in ["BaseModel", "User"]:
-            print("** class doesn't exist **")
-            return
-        if len(args) < 2:
-            print("** instance id missing **")
-            return
-        key = f"{args[0]}.{args[1]}"
-        if key not in storage.all():
-            print("** no instance found **")
-            return
-        if len(args) < 3:
-            print("** attribute name missing **")
-            return
-        if len(args) < 4:
-            print("** value missing **")
-            return
-        obj = storage.all()[key]
-        setattr(obj, args[2], eval(args[3]))
-        obj.save()
+    def default(self, line):
+        """Handle commands not explicitly defined."""
+        if line.endswith(".all()"):
+            self.do_all(line)
+        else:
+            print("** Unknown syntax: {}".format(line))
 
 
 if __name__ == "__main__":
