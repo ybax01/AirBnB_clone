@@ -4,8 +4,6 @@ FileStorage module
 Defines a class to serialize and deserialize objects.
 """
 import json
-from models.base_model import BaseModel
-from models.user import User
 
 
 class FileStorage:
