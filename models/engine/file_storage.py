@@ -1,41 +1,65 @@
 #!/usr/bin/python3
 """
-FileStorage module
-Defines a class to serialize and deserialize objects.
+FileStorage module that serializes instances to a JSON file
+and deserializes JSON file to instances.
 """
-import json
 
+import json
+from models.base_model import BaseModel
+from models.place import Place
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.review import Review
 
 class FileStorage:
-    """Serializes and deserializes JSON files for object persistence"""
+    """Serializes instances to a JSON file and deserializes JSON file to instances.
+
+    Attributes:
+        __file_path (str): Path to the JSON file.
+        __objects (dict): Dictionary of instantiated objects.
+    """
     __file_path = "file.json"
     __objects = {}
 
     def all(self):
-        """Returns all objects in the storage"""
+        """Returns the dictionary __objects."""
         return self.__objects
 
     def new(self, obj):
-        """Adds a new object to storage"""
+        """Adds a new object to __objects.
+
+        Args:
+            obj (BaseModel): The object to add.
+        """
         key = f"{obj.__class__.__name__}.{obj.id}"
         self.__objects[key] = obj
 
     def save(self):
-        """Serializes __objects to the JSON file"""
-        obj_dict = {k: v.to_dict() for k, v in self.__objects.items()}
+        """Serializes __objects to the JSON file."""
+        obj_dict = {key: obj.to_dict() for key, obj in self.__objects.items()}
         with open(self.__file_path, "w") as f:
             json.dump(obj_dict, f)
 
     def reload(self):
-        """Deserializes the JSON file into __objects"""
+        """Deserializes the JSON file to __objects, if it exists."""
         try:
             with open(self.__file_path, "r") as f:
                 obj_dict = json.load(f)
-            for key, value in obj_dict.items():
-                cls_name = value["__class__"]
-                if cls_name == "BaseModel":
-                    self.__objects[key] = BaseModel(**value)
-                elif cls_name == "User":
-                    self.__objects[key] = User(**value)
+                for key, value in obj_dict.items():
+                    class_name = value["__class__"]
+                    if class_name in classes:
+                        self.__objects[key] = classes[class_name](**value)
         except FileNotFoundError:
             pass
+
+
+# Dictionary of class names for dynamic instantiation
+classes = {
+    "BaseModel": BaseModel,
+    "Place": Place,
+    "State": State,
+    "City": City,
+    "Amenity": Amenity,
+    "Review": Review
+}
