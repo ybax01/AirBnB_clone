@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 """
-Init file for the models package.
+Initialize the models package.
 """
 
-# Optionally, you can import BaseModel for easier package-level access.
-# from models.base_model import BaseModel
+from models.engine.file_storage import FileStorage
+
+storage = FileStorage()
+storage.reload()

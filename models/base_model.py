@@ -1,57 +1,66 @@
 #!/usr/bin/python3
 """
-This module defines the BaseModel class which serves as a base class
-for other models. It includes common attributes and methods.
+BaseModel module for the base class of the project.
 """
 
 import uuid
 from datetime import datetime
+from models import storage
 
 
 class BaseModel:
-    """Defines all common attributes/methods for other classes."""
+    """
+    Base class for other models.
 
+    Attributes:
+        id (str): Unique identifier for each instance.
+        created_at (datetime): Time of creation.
+        updated_at (datetime): Time of last update.
+    """
     def __init__(self, *args, **kwargs):
         """
-        Initializes a new BaseModel instance.
-        - If kwargs is provided and not empty, it creates attributes
-          from the key-value pairs in kwargs (except '__class__').
-        - Otherwise, it generates a new id and sets created_at and updated_at.
+        Initializes a new instance.
+
+        Args:
+            *args: Unused.
+            **kwargs: Dictionary of attributes.
         """
         if kwargs:
             for key, value in kwargs.items():
                 if key == "created_at" or key == "updated_at":
-                    setattr(self, key, datetime.fromisoformat(value))
-                elif key != "__class__":
-                    setattr(self, key, value)
+                    value = datetime.fromisoformat(value)
+                setattr(self, key, value)
         else:
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
-            self.updated_at = self.created_at
-
-    def __str__(self):
-        """
-        Returns a string representation of the instance.
-        Format: [<class name>] (<self.id>) <self.__dict__>
-        """
-        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
+            self.updated_at = datetime.now()
+            storage.new(self)
 
     def save(self):
         """
-        Updates the public instance attribute `updated_at`
-        with the current datetime.
+        Updates the updated_at attribute and saves to storage.
         """
         self.updated_at = datetime.now()
+        storage.save()
 
     def to_dict(self):
         """
         Returns a dictionary representation of the instance.
-        - Includes all attributes in __dict__.
-        - Adds a `__class__` key with the class name.
-        - Converts created_at and updated_at to ISO format strings.
+
+        Returns:
+            dict: Dictionary representation.
         """
-        dictionary = self.__dict__.copy()
-        dictionary["__class__"] = self.__class__.__name__
-        dictionary["created_at"] = self.created_at.isoformat()
-        dictionary["updated_at"] = self.updated_at.isoformat()
-        return dictionary
+        result = self.__dict__.copy()
+        result["__class__"] = self.__class__.__name__
+        result["created_at"] = self.created_at.isoformat()
+        result["updated_at"] = self.updated_at.isoformat()
+        return result
+
+    def __str__(self):
+        """
+        Returns the string representation of the instance.
+
+        Returns:
+            str: String representation.
+        """
+        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
